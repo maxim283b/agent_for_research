@@ -6,6 +6,7 @@
 - `agent` режим с состоянием, инструментами, trace и отбором источников;
 - `agent + evaluator` режим с дополнительным внутренним контролем качества;
 - браузерный интерфейс для демонстрации;
+- серверный API для безопасного публичного доступа к агенту;
 - CLI-скрипты для контролируемых экспериментов и подготовки материалов для отчета.
 
 ## Что делает система
@@ -72,8 +73,10 @@
 .
 ├── data/topics.json
 ├── docs/lab-report-template.md
+├── app-config.js
 ├── index.html
 ├── styles.css
+├── server/
 ├── web/app.js
 ├── src/core/
 ├── scripts/
@@ -90,7 +93,13 @@
 
 ## Быстрый старт
 
-### 1. Запустить веб-интерфейс
+### 1. Запустить backend
+
+```bash
+npm start
+```
+
+### 2. Запустить веб-интерфейс
 
 ```bash
 npm run serve
@@ -98,7 +107,7 @@ npm run serve
 
 После этого открой `http://127.0.0.1:4173`.
 
-### 2. Локальный запуск через Ollama
+### 3. Локальный запуск через Ollama
 
 Если у тебя уже поднят `Ollama`, достаточно оставить параметры по умолчанию:
 
@@ -106,19 +115,19 @@ npm run serve
 - base URL: `http://127.0.0.1:11434`
 - model: `qwen2.5:7b`
 
-### 3. Запуск одной темы из CLI
+### 4. Запуск одной темы из CLI
 
 ```bash
 npm run single -- --mode agent_evaluator --topic "Planning and reflection in LLM agents"
 ```
 
-### 4. Smoke-test
+### 5. Smoke-test
 
 ```bash
 npm run smoke -- --mode agent_evaluator --topic "Planning and reflection in LLM agents"
 ```
 
-### 5. Полный эксперимент
+### 6. Полный эксперимент
 
 ```bash
 npm run experiments
@@ -197,16 +206,32 @@ npm run report -- --input results/<timestamp>/records.json
 npm run charts -- --input results/<timestamp>/summary.json
 ```
 
+## Публичный деплой
+
+Рекомендуемая схема:
+
+- `Netlify` для фронтенда
+- `Railway` для backend API
+
+Точный гайд:
+
+- [docs/deploy-netlify-railway.md](/Users/maksi/Desktop/в итмо/deeplearning/docs/deploy-netlify-railway.md)
+
+### Почему так
+
+- API-ключ модели хранится на сервере, а не в браузере
+- преподаватель может открыть сайт в любой момент
+- сам агент работает как постоянный backend-сервис
+
 ## Размещение на Netlify
 
-Проект сделан как статический фронтенд без обязательного сборщика. Для публикации:
+Фронтенд сделан как статический сайт без обязательного сборщика. Для публикации:
 
 1. отправь репозиторий на GitHub;
-2. подключи репозиторий в Netlify;
-3. укажи publish directory: `.`;
-4. используй OpenAI-compatible endpoint в браузере.
-
-Важно: если страница размещена публично, API-ключ вводится на клиенте. Для production-сценария лучше вынести вызовы модели в серверный прокси, но для лабораторной и демонстрации текущая схема подходит.
+2. задеплой backend на Railway;
+3. подключи репозиторий в Netlify;
+4. укажи publish directory: `.`;
+5. пропиши Railway URL в [app-config.js](/Users/maksi/Desktop/в итмо/deeplearning/app-config.js).
 
 ## Тесты
 
