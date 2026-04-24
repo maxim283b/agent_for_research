@@ -1,0 +1,19 @@
+{
+  "name": "agentic-ai-literature-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Laboratory project for comparing baseline and agentic approaches in scientific topic review generation.",
+  "scripts": {
+    "serve": "node ./scripts/serve.js",
+    "smoke": "node ./scripts/smoke-test.js",
+    "single": "node ./scripts/run-single.js",
+    "experiments": "node ./scripts/run-experiments.js",
+    "report": "node ./scripts/build-report.js",
+    "charts": "node ./scripts/build-charts.js",
+    "test": "node --test ./tests/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agentic AI Literature Lab</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <p class="eyebrow">Laboratory 3 • Agent AI</p>
+        <h1>Сравнение baseline и агентного режима для научного поиска</h1>
+        <p class="hero-copy">
+          Веб-интерфейс управляет одной и той же исследовательской логикой:
+          ищет контекст, собирает публикации, строит trace и оценивает качество
+          результата по фиксированной рубрике.
+        </p>
+      </header>
+
+      <main class="layout">
+        <section class="panel control-panel">
+          <h2>Параметры запуска</h2>
+          <form id="run-form">
+            <label>
+              Режим
+              <select name="mode">
+                <option value="baseline">Baseline</option>
+                <option value="agent" selected>Agent</option>
+                <option value="agent_evaluator">Agent + evaluator</option>
+              </select>
+            </label>
+
+            <label>
+              Провайдер модели
+              <select name="provider" id="provider-select">
+                <option value="ollama" selected>Ollama</option>
+                <option value="openai">OpenAI-compatible</option>
+              </select>
+            </label>
+
+            <label>
+              Base URL
+              <input
+                type="text"
+                name="baseUrl"
+                value="http://127.0.0.1:11434"
+                placeholder="http://127.0.0.1:11434"
+              />
+            </label>
+
+            <label>
+              Model
+              <input type="text" name="model" value="qwen2.5:7b" />
+            </label>
+
+            <label id="api-key-row" class="hidden">
+              API key
+              <input type="password" name="apiKey" placeholder="sk-..." />
+            </label>
+
+            <div class="two-col">
+              <label>
+                Top-K источников
+                <input type="number" name="topK" min="3" max="8" value="5" />
+              </label>
+
+              <label>
+                Max steps
+                <input type="number" name="maxSteps" min="3" max="8" value="6" />
+              </label>
+            </div>
+
+            <label>
+              Тема
+              <textarea
+                name="topic"
+                rows="4"
+                placeholder="Например: Planning and reflection in LLM agents"
+              >Planning and reflection in LLM agents</textarea>
+            </label>
+
+            <div class="topic-chips" id="topic-chips"></div>
+
+            <div class="actions">
+              <button type="submit" class="primary">Запустить</button>
+              <button type="button" id="export-trace" class="secondary" disabled>
+                Экспорт trace
+              </button>
+            </div>
+          </form>
+          <p class="hint">
+            Для Netlify удобнее использовать OpenAI-compatible endpoint и вводить ключ
+            на клиенте. Для локального режима по умолчанию подходит Ollama.
+          </p>
+        </section>
+
+        <section class="panel output-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Execution</p>
+              <h2>Результат запуска</h2>
+            </div>
+            <p id="status-text" class="status-text">Ожидает запуска</p>
+          </div>
+
+          <div class="metrics" id="metrics"></div>
+
+          <section class="subpanel">
+            <h3>Итоговый ответ</h3>
+            <pre id="answer-output" class="answer-output">Здесь появится структурированный обзор.</pre>
+          </section>
+
+          <section class="subpanel">
+            <h3>Источники</h3>
+            <div id="sources-output" class="sources-grid"></div>
+          </section>
+
+          <section class="subpanel">
+            <h3>Trace</h3>
+            <div class="trace-wrap">
+              <table class="trace-table">
+                <thead>
+                  <tr>
+                    <th>Step</th>
+                    <th>Action</th>
+                    <th>Status</th>
+                    <th>Summary</th>
+                    <th>Sources</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody id="trace-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./web/app.js"></script>
+  </body>
+</html>
