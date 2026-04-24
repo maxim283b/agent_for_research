@@ -181,7 +181,7 @@ npm run single -- \
 
 Шаблон для отчета лежит в:
 
-- [docs/lab-report-template.md](/Users/maksi/Desktop/в итмо/deeplearning/docs/lab-report-template.md)
+- docs
 
 После прогона экспериментов можно собрать черновик:
 
