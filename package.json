@@ -5,6 +5,8 @@
   "type": "module",
   "description": "Laboratory project for comparing baseline and agentic approaches in scientific topic review generation.",
   "scripts": {
+    "start": "node ./server/api-server.js",
+    "backend": "node ./server/api-server.js",
     "serve": "node ./scripts/serve.js",
     "smoke": "node ./scripts/smoke-test.js",
     "single": "node ./scripts/run-single.js",
