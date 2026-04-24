@@ -1,14 +1,4 @@
-import {
-  DEFAULT_OLLAMA_BASE_URL,
-  DEFAULT_OLLAMA_MODEL,
-  DEFAULT_TOPICS,
-  createLlmClient,
-  runSingleMode
-} from "../src/core/index.js";
-
 const form = document.querySelector("#run-form");
-const providerSelect = document.querySelector("#provider-select");
-const apiKeyRow = document.querySelector("#api-key-row");
 const topicChips = document.querySelector("#topic-chips");
 const answerOutput = document.querySelector("#answer-output");
 const sourcesOutput = document.querySelector("#sources-output");
@@ -16,21 +6,39 @@ const traceBody = document.querySelector("#trace-body");
 const metrics = document.querySelector("#metrics");
 const statusText = document.querySelector("#status-text");
 const exportTraceButton = document.querySelector("#export-trace");
+const apiBaseUrlInput = document.querySelector("#api-base-url");
 
 let lastResult = null;
-let liveTrace = [];
+const DEFAULT_TOPICS = [
+  "Agentic AI for customer support",
+  "Graph RAG for enterprise knowledge systems",
+  "LLM evaluation and process-aware metrics",
+  "Tool-using language models in scientific search",
+  "Retrieval-augmented generation in medicine",
+  "Planning and reflection in LLM agents",
+  "Human-in-the-loop AI systems",
+  "Knowledge graphs for procedural reasoning"
+];
 
-function syncProviderUi() {
-  const isOpenAi = providerSelect.value === "openai";
-  apiKeyRow.classList.toggle("hidden", !isOpenAi);
-
-  if (isOpenAi) {
-    form.elements.baseUrl.value ||= "https://api.openai.com/v1";
-    form.elements.model.value ||= "gpt-4.1-mini";
-  } else {
-    form.elements.baseUrl.value = DEFAULT_OLLAMA_BASE_URL;
-    form.elements.model.value = DEFAULT_OLLAMA_MODEL;
+function getDefaultApiBaseUrl() {
+  const runtimeConfig = window.APP_CONFIG || {};
+  const saved = window.localStorage.getItem("agentApiBaseUrl");
+  if (saved) {
+    return saved;
   }
+  if (runtimeConfig.API_BASE_URL) {
+    return runtimeConfig.API_BASE_URL;
+  }
+  if (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
+    return "http://127.0.0.1:8787";
+  }
+  return `${window.location.origin}`;
+}
+
+function normalizeApiBaseUrl(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\/+$/, "");
 }
 
 function renderTopicChips() {
@@ -47,7 +55,14 @@ function renderTopicChips() {
   }
 }
 
-function renderTrace(trace) {
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function renderTrace(trace = []) {
   traceBody.innerHTML = "";
   for (const step of trace) {
     const row = document.createElement("tr");
@@ -55,7 +70,7 @@ function renderTrace(trace) {
       <td>${step.stepId}</td>
       <td>${step.action}</td>
       <td>${step.status}</td>
-      <td>${step.summary || ""}</td>
+      <td>${escapeHtml(step.summary || "")}</td>
       <td>${step.sourceCount}</td>
       <td>${step.noteCount}</td>
     `;
@@ -112,6 +127,22 @@ function renderResult(result) {
   renderTrace(result.trace || []);
 }
 
+async function fetchTopics(apiBaseUrl) {
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/topics`);
+    if (!response.ok) {
+      return;
+    }
+    const payload = await response.json();
+    if (Array.isArray(payload.topics) && payload.topics.length) {
+      DEFAULT_TOPICS.splice(0, DEFAULT_TOPICS.length, ...payload.topics);
+      renderTopicChips();
+    }
+  } catch {
+    // Keep local default topics when API is unreachable.
+  }
+}
+
 function downloadJson(filename, payload) {
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
     type: "application/json"
@@ -124,9 +155,9 @@ function downloadJson(filename, payload) {
   URL.revokeObjectURL(url);
 }
 
-providerSelect.addEventListener("change", syncProviderUi);
-syncProviderUi();
+apiBaseUrlInput.value = getDefaultApiBaseUrl();
 renderTopicChips();
+fetchTopics(normalizeApiBaseUrl(apiBaseUrlInput.value));
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -136,47 +167,45 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  const provider = form.elements.provider.value;
-  const baseUrl = form.elements.baseUrl.value.trim();
-  const model = form.elements.model.value.trim();
-  const apiKey = form.elements.apiKey.value.trim();
+  const apiBaseUrl = normalizeApiBaseUrl(form.elements.apiBaseUrl.value);
   const mode = form.elements.mode.value;
   const topK = Number(form.elements.topK.value || 5);
   const maxSteps = Number(form.elements.maxSteps.value || 6);
 
-  if (provider === "openai" && !apiKey) {
-    statusText.textContent = "Для OpenAI-compatible режима нужен API key.";
+  if (!apiBaseUrl) {
+    statusText.textContent = "Нужен URL бэкенда агента.";
     return;
   }
 
-  liveTrace = [];
+  window.localStorage.setItem("agentApiBaseUrl", apiBaseUrl);
   lastResult = null;
   exportTraceButton.disabled = true;
   answerOutput.textContent = "Выполняется запуск...";
   sourcesOutput.innerHTML = "";
   metrics.innerHTML = "";
   renderTrace([]);
-  statusText.textContent = "Идет поиск, генерация и оценка результата...";
+  statusText.textContent = "Идет вызов серверного агента...";
 
   try {
-    const llm = createLlmClient({
-      provider,
-      baseUrl,
-      model,
-      apiKey
+    const response = await fetch(`${apiBaseUrl}/api/run`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        topic,
+        mode,
+        topK,
+        maxSteps
+      })
     });
 
-    const result = await runSingleMode(topic, {
-      mode,
-      llm,
-      topK,
-      maxSteps,
-      onStep(step) {
-        liveTrace = [...liveTrace, step];
-        renderTrace(liveTrace);
-        statusText.textContent = `Шаг ${step.stepId + 1}: ${step.action}`;
-      }
-    });
+    const payload = await response.json();
+    if (!response.ok || !payload.ok) {
+      throw new Error(payload.error || "Server request failed");
+    }
+
+    const result = payload.result;
 
     lastResult = result;
     exportTraceButton.disabled = false;
