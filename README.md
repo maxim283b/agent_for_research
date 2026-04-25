@@ -1,17 +1,19 @@
-# Agentic AI Literature Lab
+# Agentic AI Literature Assistant
 
-Проект для лабораторной работы по агентному искусственному интеллекту. Репозиторий реализует:
+Веб-приложение и backend API для научно-информационного поиска по заданной теме. Проект ищет общий контекст, находит публикации, отбирает релевантные источники и формирует структурированный обзор с trace выполнения.
 
-- `baseline` режим для одношагового формирования обзора;
-- `agent` режим с состоянием, инструментами, trace и отбором источников;
-- `agent + evaluator` режим с дополнительным внутренним контролем качества;
-- браузерный интерфейс для демонстрации;
-- серверный API для безопасного публичного доступа к агенту;
-- CLI-скрипты для контролируемых экспериментов и подготовки материалов для отчета.
+## Возможности
 
-## Что делает система
+- `baseline` режим для быстрого одношагового обзора
+- `agent` режим с состоянием, инструментами и пошаговой траекторией
+- `agent + evaluator` режим с дополнительной проверкой качества
+- браузерный интерфейс для интерактивного использования
+- серверный API для безопасного публичного доступа к агенту
+- trace, метрики и CLI-скрипты для экспериментальных запусков
 
-По теме исследования система строит краткий научно-аналитический обзор в фиксированной структуре:
+## Что возвращает агент
+
+По теме исследования система строит краткий обзор в фиксированной структуре:
 
 1. `Определение`
 2. `Основные подходы`
@@ -22,40 +24,41 @@
 
 Для поиска и grounding используются:
 
-- `Wikipedia API` для общего контекста;
-- `OpenAlex API` для публикаций и аннотаций;
-- `Crossref API` как дополнительный источник при уточнении поиска.
+- `Wikipedia API` для общего контекста
+- `OpenAlex API` для публикаций и аннотаций
+- `Crossref API` как дополнительный источник при уточнении поиска
 
 ## Архитектура
 
 ### Baseline
 
-`baseline` делает ровно три логических шага:
+`baseline` делает короткий линейный проход:
 
-1. ищет краткий общий контекст;
-2. берет короткий список публикаций;
-3. формирует итоговый ответ за один проход.
+1. ищет общий контекст;
+2. берет компактный список публикаций;
+3. сразу формирует итоговый обзор.
 
 ### Agent
 
-`agent` хранит состояние `AgentState` и проходит по шагам:
+`agent` использует состояние и планировочную логику:
 
 1. собирает общий контекст;
-2. ищет публикации через `OpenAlex`;
-3. при необходимости уточняет запрос и добирает источники через `OpenAlex + Crossref`;
-4. отбирает наиболее релевантные работы и извлекает заметки;
-5. формирует структурированный итоговый обзор.
+2. ищет публикации;
+3. при необходимости уточняет запрос;
+4. отбирает наиболее релевантные источники;
+5. извлекает notes;
+6. строит финальный ответ.
 
 ### Agent + evaluator
 
-Этот режим делает то же самое, но после генерации:
+Этот режим дополняет агентный цикл отдельной оценкой результата:
 
-1. оценивает ответ по фиксированной рубрике;
-2. при необходимости перерабатывает ответ по замечаниям evaluator.
+1. проверяет полноту и согласованность ответа;
+2. при необходимости выполняет ревизию финального текста.
 
 ### Trace
 
-Каждый запуск пишет детализированный trace:
+Каждый запуск сохраняет детализированный trace:
 
 - `stepId`
 - `action`
@@ -71,16 +74,18 @@
 
 ```text
 .
-├── data/topics.json
-├── docs/lab-report-template.md
 ├── app-config.js
+├── data/topics.json
+├── docs/
 ├── index.html
-├── styles.css
+├── netlify.toml
+├── railway.json
 ├── server/
-├── web/app.js
 ├── src/core/
 ├── scripts/
+├── styles.css
 ├── tests/
+├── web/
 └── results/
 ```
 
@@ -89,17 +94,17 @@
 - `Node.js 20+`
 - локальный `Ollama` или любой OpenAI-compatible endpoint
 
-Локально проверено под `Node 24`.
+Локально проект проверялся под `Node 24`.
 
 ## Быстрый старт
 
-### 1. Запустить backend
+### 1. Запустить backend API
 
 ```bash
 npm start
 ```
 
-### 2. Запустить веб-интерфейс
+### 2. Запустить статический frontend
 
 ```bash
 npm run serve
@@ -107,131 +112,122 @@ npm run serve
 
 После этого открой `http://127.0.0.1:4173`.
 
-### 3. Локальный запуск через Ollama
+## Локальная конфигурация модели
 
-Если у тебя уже поднят `Ollama`, достаточно оставить параметры по умолчанию:
+Пример для Ollama:
 
-- provider: `ollama`
-- base URL: `http://127.0.0.1:11434`
-- model: `qwen2.5:7b`
+- `LLM_PROVIDER=ollama`
+- `OLLAMA_BASE_URL=http://127.0.0.1:11434`
+- `OLLAMA_MODEL=qwen2.5:7b`
 
-### 4. Запуск одной темы из CLI
+Пример для OpenAI-compatible API:
+
+- `LLM_PROVIDER=openai`
+- `OPENAI_BASE_URL=https://api.openai.com/v1`
+- `OPENAI_API_KEY=...`
+- `OPENAI_MODEL=gpt-4.1-mini`
+
+Шаблон переменных лежит в [.env.example](/Users/maksi/Desktop/в итмо/deeplearning/.env.example).
+
+## Использование через браузер
+
+Frontend не хранит ключи модели в браузере. Страница отправляет запросы в backend API, адрес которого задается в [app-config.js](/Users/maksi/Desktop/в итмо/deeplearning/app-config.js).
+
+По умолчанию локально используется:
+
+```js
+window.APP_CONFIG = {
+  API_BASE_URL: ""
+};
+```
+
+На локальной машине frontend автоматически подставляет `http://127.0.0.1:8787`, а в production нужно явно указать публичный URL backend-сервиса.
+
+## HTTP API
+
+Backend предоставляет следующие endpoints:
+
+- `GET /api/health`
+- `GET /api/config`
+- `GET /api/topics`
+- `POST /api/run`
+
+Пример запроса:
+
+```bash
+curl -X POST http://127.0.0.1:8787/api/run \
+  -H "Content-Type: application/json" \
+  -d '{
+    "topic": "Planning and reflection in LLM agents",
+    "mode": "agent_evaluator",
+    "topK": 5,
+    "maxSteps": 6
+  }'
+```
+
+## CLI-скрипты
+
+Запуск одной темы:
 
 ```bash
 npm run single -- --mode agent_evaluator --topic "Planning and reflection in LLM agents"
 ```
 
-### 5. Smoke-test
+Smoke-test:
 
 ```bash
 npm run smoke -- --mode agent_evaluator --topic "Planning and reflection in LLM agents"
 ```
 
-### 6. Полный эксперимент
+Серия экспериментов:
 
 ```bash
 npm run experiments
 ```
 
-Скрипт создаст папку в `results/<timestamp>/` и сохранит:
-
-- все отдельные запуски;
-- trace-файлы;
-- `records.json`;
-- `summary.csv`;
-- `summary.md`;
-- `summary.json`;
-- `quality-comparison.svg`;
-- `process-comparison.svg`.
-
-## Параметры модели
-
-### Ollama
-
-Через UI или CLI:
-
-- `provider=ollama`
-- `base-url=http://127.0.0.1:11434`
-- `model=qwen2.5:7b`
-
-### OpenAI-compatible
-
-Через UI или CLI:
-
-- `provider=openai`
-- `base-url=https://.../v1`
-- `api-key=...`
-- `model=...`
-
-Пример:
-
-```bash
-npm run single -- \
-  --provider openai \
-  --base-url https://api.openai.com/v1 \
-  --api-key YOUR_KEY \
-  --model gpt-4.1-mini \
-  --mode agent \
-  --topic "Tool-using language models in scientific search"
-```
-
-## Экспериментальный дизайн
-
-По умолчанию проект покрывает требования лабораторной:
-
-- 8 тем из `data/topics.json`;
-- сравнение `baseline`, `agent`, `agent_evaluator`;
-- sweep по `topK = 3, 5, 8`;
-- sweep по `maxSteps = 4, 6, 8`.
-
-Внешняя оценка применяется ко всем конфигурациям одинаково, чтобы сравнение было воспроизводимым.
-
-## Отчет
-
-Шаблон для отчета лежит в:
-
-- docs
-
-После прогона экспериментов можно собрать черновик:
-
-```bash
-npm run report -- --input results/<timestamp>/records.json
-```
-
-Будет создан файл `lab-report-draft.md` рядом с экспериментами.
-
-При необходимости графики можно пересобрать отдельно:
+Построение графиков:
 
 ```bash
 npm run charts -- --input results/<timestamp>/summary.json
+```
+
+Сборка markdown-отчета:
+
+```bash
+npm run report -- --input results/<timestamp>/records.json
 ```
 
 ## Публичный деплой
 
 Рекомендуемая схема:
 
-- `Netlify` для фронтенда
 - `Railway` для backend API
+- `Netlify` для frontend
 
-Точный гайд:
+Почему именно так:
+
+- ключ модели хранится на сервере, а не в браузере
+- backend можно держать постоянно доступным
+- frontend остается простым статическим сайтом
+
+Пошаговый гайд:
 
 - [docs/deploy-netlify-railway.md](/Users/maksi/Desktop/в итмо/deeplearning/docs/deploy-netlify-railway.md)
 
-### Почему так
+## Запуск в production
 
-- API-ключ модели хранится на сервере, а не в браузере
-- преподаватель может открыть сайт в любой момент
-- сам агент работает как постоянный backend-сервис
+### Railway
 
-## Размещение на Netlify
+Проект уже содержит [railway.json](/Users/maksi/Desktop/в итмо/deeplearning/railway.json), поэтому backend можно подключить к Railway напрямую из GitHub.
 
-Фронтенд сделан как статический сайт без обязательного сборщика. Для публикации:
+### Netlify
 
-1. отправь репозиторий на GitHub;
-2. задеплой backend на Railway;
-3. подключи репозиторий в Netlify;
-4. укажи publish directory: `.`;
-5. пропиши Railway URL в [app-config.js](/Users/maksi/Desktop/в итмо/deeplearning/app-config.js).
+Фронтенд публикуется как статический сайт без сборщика:
+
+- Build command: пусто
+- Publish directory: `.`
+
+После получения Railway URL нужно обновить [app-config.js](/Users/maksi/Desktop/в итмо/deeplearning/app-config.js), чтобы frontend ходил в production backend.
 
 ## Тесты
 
@@ -239,10 +235,15 @@ npm run charts -- --input results/<timestamp>/summary.json
 npm test
 ```
 
-Покрыты базовые функции:
+Тестами покрыты базовые функции:
 
-- восстановление abstract из inverted index;
-- разбор JSON evaluator;
-- проверка обязательных разделов;
-- дедупликация источников;
-- ранжирование релевантных работ.
+- восстановление abstract из inverted index
+- разбор JSON evaluator
+- проверка обязательных разделов
+- дедупликация источников
+- ранжирование релевантных работ
+
+## Дополнительные материалы
+
+- деплой-гайд: [docs/deploy-netlify-railway.md](/Users/maksi/Desktop/в итмо/deeplearning/docs/deploy-netlify-railway.md)
+- шаблон отчетных материалов: [docs/lab-report-template.md](/Users/maksi/Desktop/в итмо/deeplearning/docs/lab-report-template.md)
