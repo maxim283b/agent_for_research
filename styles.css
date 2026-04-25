@@ -251,10 +251,96 @@ button:disabled {
 
 .answer-output {
   margin: 0;
-  white-space: pre-wrap;
   line-height: 1.66;
   color: var(--ink);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.answer-output > :first-child {
+  margin-top: 0;
+}
+
+.answer-output > :last-child {
+  margin-bottom: 0;
+}
+
+.answer-output h1,
+.answer-output h2,
+.answer-output h3 {
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.answer-output h1 {
+  margin: 0 0 18px;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+}
+
+.answer-output h2 {
+  margin: 28px 0 12px;
+  font-size: 1.5rem;
+}
+
+.answer-output h3 {
+  margin: 22px 0 10px;
+  font-size: 1.18rem;
+}
+
+.answer-output p,
+.answer-output ul,
+.answer-output ol,
+.answer-output pre,
+.answer-output blockquote {
+  margin: 0 0 14px;
+}
+
+.answer-output ul,
+.answer-output ol {
+  padding-left: 24px;
+}
+
+.answer-output li + li {
+  margin-top: 8px;
+}
+
+.answer-output hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 22px 0;
+}
+
+.answer-output code {
   font-family: "SFMono-Regular", "JetBrains Mono", "Menlo", monospace;
+  font-size: 0.92em;
+  padding: 0.08em 0.35em;
+  border-radius: 8px;
+  background: rgba(31, 36, 48, 0.07);
+}
+
+.answer-output pre {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(31, 36, 48, 0.05);
+  overflow-x: auto;
+}
+
+.answer-output pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.answer-output strong {
+  font-weight: 700;
+}
+
+.answer-output em {
+  font-style: italic;
+}
+
+.answer-output a {
+  color: var(--accent-dark);
 }
 
 .sources-grid {

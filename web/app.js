@@ -62,6 +62,136 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;");
 }
 
+function escapeInlineHtmlPreservingCode(text) {
+  return escapeHtml(text)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+}
+
+function stripMarkdownFence(text) {
+  return String(text || "")
+    .replace(/^```[a-zA-Z0-9_-]*\s*\n/, "")
+    .replace(/\n```$/, "")
+    .trim();
+}
+
+function renderMarkdown(text) {
+  const normalized = stripMarkdownFence(text).replace(/\r\n/g, "\n");
+  if (!normalized) {
+    return "<p>Ответ не был получен.</p>";
+  }
+
+  const lines = normalized.split("\n");
+  const html = [];
+  let inCodeBlock = false;
+  let codeLines = [];
+  let paragraphLines = [];
+  let listType = null;
+
+  function flushParagraph() {
+    if (!paragraphLines.length) {
+      return;
+    }
+    html.push(`<p>${escapeInlineHtmlPreservingCode(paragraphLines.join(" "))}</p>`);
+    paragraphLines = [];
+  }
+
+  function closeList() {
+    if (listType) {
+      html.push(`</${listType}>`);
+      listType = null;
+    }
+  }
+
+  function flushCodeBlock() {
+    if (!codeLines.length) {
+      return;
+    }
+    html.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+    codeLines = [];
+  }
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith("```")) {
+      flushParagraph();
+      closeList();
+      if (inCodeBlock) {
+        flushCodeBlock();
+        inCodeBlock = false;
+      } else {
+        inCodeBlock = true;
+      }
+      continue;
+    }
+
+    if (inCodeBlock) {
+      codeLines.push(rawLine);
+      continue;
+    }
+
+    if (!trimmed) {
+      flushParagraph();
+      closeList();
+      continue;
+    }
+
+    if (/^---+$/.test(trimmed)) {
+      flushParagraph();
+      closeList();
+      html.push("<hr>");
+      continue;
+    }
+
+    const headingMatch = trimmed.match(/^(#{1,3})\s+(.+)$/);
+    if (headingMatch) {
+      flushParagraph();
+      closeList();
+      const level = headingMatch[1].length;
+      html.push(`<h${level}>${escapeInlineHtmlPreservingCode(headingMatch[2])}</h${level}>`);
+      continue;
+    }
+
+    const orderedMatch = trimmed.match(/^\d+\.\s+(.+)$/);
+    if (orderedMatch) {
+      flushParagraph();
+      if (listType !== "ol") {
+        closeList();
+        listType = "ol";
+        html.push("<ol>");
+      }
+      html.push(`<li>${escapeInlineHtmlPreservingCode(orderedMatch[1])}</li>`);
+      continue;
+    }
+
+    const unorderedMatch = trimmed.match(/^[-*]\s+(.+)$/);
+    if (unorderedMatch) {
+      flushParagraph();
+      if (listType !== "ul") {
+        closeList();
+        listType = "ul";
+        html.push("<ul>");
+      }
+      html.push(`<li>${escapeInlineHtmlPreservingCode(unorderedMatch[1])}</li>`);
+      continue;
+    }
+
+    closeList();
+    paragraphLines.push(trimmed);
+  }
+
+  flushParagraph();
+  closeList();
+  if (inCodeBlock) {
+    flushCodeBlock();
+  }
+
+  return html.join("");
+}
+
 function renderTrace(trace = []) {
   traceBody.innerHTML = "";
   for (const step of trace) {
@@ -139,7 +269,7 @@ function getResultMessage(result) {
 }
 
 function renderResult(result) {
-  answerOutput.textContent = getResultMessage(result);
+  answerOutput.innerHTML = renderMarkdown(getResultMessage(result));
   renderMetrics(result);
   renderSources(result.sources || []);
   renderTrace(result.trace || []);
