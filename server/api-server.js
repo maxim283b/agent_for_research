@@ -24,7 +24,7 @@ const model =
   process.env.OPENAI_MODEL ||
   process.env.OLLAMA_MODEL ||
   process.env.LLM_MODEL ||
-  "gpt-4.1-mini";
+  "mistral";
 const baseUrl =
   process.env.OPENAI_BASE_URL ||
   process.env.OLLAMA_BASE_URL ||

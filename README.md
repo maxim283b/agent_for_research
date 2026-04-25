@@ -118,14 +118,14 @@ npm run serve
 
 - `LLM_PROVIDER=ollama`
 - `OLLAMA_BASE_URL=http://127.0.0.1:11434`
-- `OLLAMA_MODEL=qwen2.5:7b`
+- `OLLAMA_MODEL=mistral`
 
 Пример для OpenAI-compatible API:
 
 - `LLM_PROVIDER=openai`
 - `OPENAI_BASE_URL=https://api.openai.com/v1`
 - `OPENAI_API_KEY=...`
-- `OPENAI_MODEL=gpt-4.1-mini`
+- `OPENAI_MODEL=mistral`
 
 Шаблон переменных лежит в [.env.example](/Users/maksi/Desktop/в итмо/deeplearning/.env.example).
 

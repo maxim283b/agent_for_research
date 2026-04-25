@@ -25,7 +25,7 @@ export const DEFAULT_TOPICS = [
 export const DEFAULT_OBJECTIVE =
   "Подготовить краткий научно-аналитический обзор с опорой на найденные источники.";
 
-export const DEFAULT_OLLAMA_MODEL = "qwen2.5:7b";
+export const DEFAULT_OLLAMA_MODEL = "mistral";
 export const DEFAULT_OLLAMA_BASE_URL = "http://127.0.0.1:11434";
 export const DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1";
 

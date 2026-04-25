@@ -21,7 +21,7 @@ Start command уже задан в [railway.json](/Users/maksi/Desktop/в итм
 - `LLM_PROVIDER=openai`
 - `OPENAI_BASE_URL=https://api.openai.com/v1`
 - `OPENAI_API_KEY=...`
-- `OPENAI_MODEL=gpt-4.1-mini`
+- `OPENAI_MODEL=mistral`
 - `ALLOWED_ORIGINS=https://YOUR_SITE.netlify.app`
 - `LLM_MAX_TOKENS=450`
 - `LLM_TEMPERATURE=0.2`
