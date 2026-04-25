@@ -34,7 +34,7 @@ export const DEFAULT_EXPERIMENT_OPTIONS = {
   topK: 5,
   perPage: 8,
   relevanceThreshold: 0.18,
-  maxTokens: 900
+  maxTokens: 1200
 };
 
 export const AGENT_SYSTEM_PROMPT = [

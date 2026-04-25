@@ -319,6 +319,7 @@ form.addEventListener("submit", async (event) => {
   const mode = form.elements.mode.value;
   const topK = Number(form.elements.topK.value || 5);
   const maxSteps = Number(form.elements.maxSteps.value || 6);
+  const maxTokens = Number(form.elements.maxTokens.value || 1200);
 
   if (!apiBaseUrl) {
     statusText.textContent = "Нужен URL бэкенда агента.";
@@ -344,7 +345,8 @@ form.addEventListener("submit", async (event) => {
         topic,
         mode,
         topK,
-        maxSteps
+        maxSteps,
+        maxTokens
       })
     });
 

@@ -23,7 +23,7 @@ Start command уже задан в [railway.json](/Users/maksi/Desktop/в итм
 - `OPENAI_API_KEY=...`
 - `OPENAI_MODEL=mistral`
 - `ALLOWED_ORIGINS=https://YOUR_SITE.netlify.app`
-- `LLM_MAX_TOKENS=450`
+- `LLM_MAX_TOKENS=1200`
 - `LLM_TEMPERATURE=0.2`
 
 После деплоя проверь:

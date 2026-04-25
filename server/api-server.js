@@ -42,14 +42,21 @@ const allowOrigins = allowOriginsRaw
   .map((item) => item.trim())
   .filter(Boolean);
 
-const llm = createLlmClient({
-  provider,
-  model,
-  baseUrl,
-  apiKey,
-  temperature: process.env.LLM_TEMPERATURE,
-  maxTokens: process.env.LLM_MAX_TOKENS || 450
-});
+function createRuntimeLlm(maxTokensOverride) {
+  return createLlmClient({
+    provider,
+    model,
+    baseUrl,
+    apiKey,
+    temperature: process.env.LLM_TEMPERATURE,
+    maxTokens:
+      maxTokensOverride ||
+      process.env.LLM_MAX_TOKENS ||
+      DEFAULT_EXPERIMENT_OPTIONS.maxTokens
+  });
+}
+
+const llm = createRuntimeLlm();
 
 function getCorsOrigin(requestOrigin) {
   if (allowOrigins.includes("*")) {
@@ -113,6 +120,11 @@ function normalizeMode(mode) {
     : "agent";
 }
 
+function normalizePositiveNumber(value, fallback) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 const server = createServer(async (request, response) => {
   const url = new URL(request.url || "/", `http://${request.headers.host}`);
   const requestOrigin = request.headers.origin;
@@ -173,9 +185,19 @@ const server = createServer(async (request, response) => {
         return;
       }
 
+      const requestLlm = createRuntimeLlm(
+        normalizePositiveNumber(
+          body.maxTokens,
+          normalizePositiveNumber(
+            process.env.LLM_MAX_TOKENS,
+            DEFAULT_EXPERIMENT_OPTIONS.maxTokens
+          )
+        )
+      );
+
       const result = await runSingleMode(topic, {
         mode: normalizeMode(body.mode),
-        llm,
+        llm: requestLlm,
         topK: Number(body.topK || DEFAULT_EXPERIMENT_OPTIONS.topK),
         maxSteps: Number(body.maxSteps || DEFAULT_EXPERIMENT_OPTIONS.maxSteps),
         perPage: Number(body.perPage || DEFAULT_EXPERIMENT_OPTIONS.perPage),

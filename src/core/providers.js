@@ -3,6 +3,7 @@ import {
   DEFAULT_OLLAMA_BASE_URL,
   DEFAULT_OLLAMA_MODEL,
   DEFAULT_OPENAI_BASE_URL,
+  DEFAULT_EXPERIMENT_OPTIONS,
   EVALUATOR_SYSTEM_PROMPT
 } from "./constants.js";
 
@@ -48,7 +49,9 @@ export function getDefaultRuntimeConfig(overrides = {}) {
       DEFAULT_OLLAMA_BASE_URL,
     apiKey: overrides.apiKey || env.OPENAI_API_KEY || "",
     temperature: Number(overrides.temperature ?? env.LLM_TEMPERATURE ?? 0.2),
-    maxTokens: Number(overrides.maxTokens ?? env.LLM_MAX_TOKENS ?? 900)
+    maxTokens: Number(
+      overrides.maxTokens ?? env.LLM_MAX_TOKENS ?? DEFAULT_EXPERIMENT_OPTIONS.maxTokens
+    )
   };
 }
 
