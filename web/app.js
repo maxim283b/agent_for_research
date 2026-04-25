@@ -120,8 +120,26 @@ function renderSources(sources) {
   }
 }
 
+function getResultMessage(result) {
+  if (result.answer && String(result.answer).trim()) {
+    return result.answer;
+  }
+
+  const trace = Array.isArray(result.trace) ? result.trace : [];
+  const lastErrorStep = [...trace].reverse().find((step) => step.status === "error");
+  if (lastErrorStep?.summary) {
+    return `Ответ не был получен.\n\nПричина: ${lastErrorStep.summary}`;
+  }
+
+  if (result.stopReason) {
+    return `Ответ не был получен.\n\nПричина остановки: ${result.stopReason}`;
+  }
+
+  return "Ответ не был получен.";
+}
+
 function renderResult(result) {
-  answerOutput.textContent = result.answer || "Ответ не был получен.";
+  answerOutput.textContent = getResultMessage(result);
   renderMetrics(result);
   renderSources(result.sources || []);
   renderTrace(result.trace || []);

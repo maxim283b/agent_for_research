@@ -26,6 +26,12 @@ async function readJsonResponse(response) {
   }
 }
 
+async function buildHttpError(prefix, response) {
+  const text = await response.text().catch(() => "");
+  const suffix = text ? `: ${text.slice(0, 400)}` : "";
+  return new Error(`${prefix} with status ${response.status}${suffix}`);
+}
+
 export function getDefaultRuntimeConfig(overrides = {}) {
   const env = typeof process !== "undefined" ? process.env || {} : {};
   return {
@@ -71,7 +77,7 @@ export function createLlmClient(config = {}, fetchFn = fetch) {
     });
 
     if (!response.ok) {
-      throw new Error(`Ollama request failed with status ${response.status}`);
+      throw await buildHttpError("Ollama request failed", response);
     }
 
     const json = await readJsonResponse(response);
@@ -102,7 +108,7 @@ export function createLlmClient(config = {}, fetchFn = fetch) {
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI-compatible request failed with status ${response.status}`);
+      throw await buildHttpError("OpenAI-compatible request failed", response);
     }
 
     const json = await readJsonResponse(response);
